@@ -14,7 +14,13 @@ var (
 
 func Init(env string) {
 	once.Do(func() {
+
+		if env == "" {
+			env = "development"
+		}
+
 		var cfg zap.Config
+
 		if env == "prod" || env == "production" {
 			cfg = zap.NewProductionConfig()
 			cfg.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
@@ -25,7 +31,10 @@ func Init(env string) {
 
 		l, err := cfg.Build()
 		if err != nil {
-			panic("No se puede inicializar zap logger: " + err.Error())
+			fallback := zap.NewExample()
+			fallback.Error("No se pudo inicializar zap correctamente, usando fallback", zap.Error(err))
+			log = fallback
+			return
 		}
 
 		log = l
@@ -34,12 +43,11 @@ func Init(env string) {
 
 func L() *zap.Logger {
 	if log == nil {
-		panic("logger no puede inicializar el llamado logger.Init() en main.go")
+		panic("logger no inicializado — llama a logger.Init(env) antes de usar logger.L()")
 	}
 	return log
 }
 
-// Sugar expone una versión simplificada del logger
 func Sugar() *zap.SugaredLogger {
 	return L().Sugar()
 }

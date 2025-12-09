@@ -2,11 +2,10 @@ package main
 
 import (
 	"daedalus-engine-go/internal/config"
+	"daedalus-engine-go/internal/core/database"
 	"daedalus-engine-go/internal/core/logger"
-	"fmt"
 	"os"
 
-	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +18,7 @@ func main() {
 		env = "development"
 	}
 
-	loadEnv(env)
+	config.LoadEnv(env)
 
 	logger.Init(env)
 	log := logger.L()
@@ -35,20 +34,12 @@ func main() {
 
 	_ = cfg
 
-}
+	db, err := database.NuevaBaseDeDatos(cfg)
 
-func loadEnv(env string) {
-	switch env {
-	case "development", "dev":
-		fmt.Println("Cargando .env.dev...")
-		_ = godotenv.Load(".env.dev")
-	case "qa":
-		fmt.Println("Cargando .env.qa...")
-		_ = godotenv.Load(".env.qa")
-	case "production", "prod":
-		fmt.Println("Usando variables de entorno del sistema")
-	default:
-		fmt.Printf("Entorno desconocido '%s' usando .env.dev por defecto\n", env)
-		_ = godotenv.Load(".env.dev")
+	if err != nil {
+		log.Fatal("No se pudo conectar a la base de datos", zap.Error(err))
 	}
+
+	defer db.Close()
+
 }
