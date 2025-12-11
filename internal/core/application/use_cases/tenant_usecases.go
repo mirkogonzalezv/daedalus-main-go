@@ -2,9 +2,9 @@ package usecases
 
 import (
 	"context"
+	logger "daedalus-engine-go/internal/common/logger"
 	domain "daedalus-engine-go/internal/core/domain/entities"
 	"daedalus-engine-go/internal/core/domain/repository"
-	"daedalus-engine-go/internal/core/logger"
 	"errors"
 	"strings"
 

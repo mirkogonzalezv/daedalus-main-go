@@ -1,8 +1,8 @@
 package database
 
 import (
+	"daedalus-engine-go/internal/common/logger"
 	"daedalus-engine-go/internal/config"
-	"daedalus-engine-go/internal/core/logger"
 	infra "daedalus-engine-go/internal/infra/database"
 	"database/sql"
 	"fmt"

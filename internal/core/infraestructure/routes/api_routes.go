@@ -1,21 +1,19 @@
 package routes
 
 import (
-	"daedalus-engine-go/internal/core/infraestructure/controllers"
+	"daedalus-engine-go/internal/container"
 
 	"github.com/gin-gonic/gin"
 )
 
 type APIRouter struct {
-	TenantController *controllers.TenantController
+	container *container.Container
 }
 
 // Constructor e inyección de dependencia
-func NewAPIRouter(
-	tenantController *controllers.TenantController,
-) *APIRouter {
+func NewAPIRouter(cont *container.Container) *APIRouter {
 	return &APIRouter{
-		TenantController: tenantController,
+		container: cont,
 	}
 }
 
@@ -23,7 +21,7 @@ func (r *APIRouter) RegisterRouter(router *gin.Engine) {
 	api := router.Group("/api")
 
 	// Rutas de Tenant
-	RegisterTenantRoutes(api, r.TenantController)
+	RegisterTenantRoutes(api, r.container.TenantController)
 
 	// Aquí van las otras rutas:
 }

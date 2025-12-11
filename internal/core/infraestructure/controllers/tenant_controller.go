@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	logger "daedalus-engine-go/internal/common/logger"
 	usecases "daedalus-engine-go/internal/core/application/use_cases"
-	"daedalus-engine-go/internal/core/logger"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
