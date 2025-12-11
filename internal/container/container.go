@@ -1,6 +1,7 @@
 package container
 
 import (
+	"daedalus-engine-go/internal/common/logger"
 	usecases "daedalus-engine-go/internal/core/application/use_cases"
 	"daedalus-engine-go/internal/core/infraestructure/controllers"
 	"daedalus-engine-go/internal/core/infraestructure/repository/local"
@@ -12,6 +13,7 @@ type Container struct {
 }
 
 func NewContainer(db *sql.DB) *Container {
+	log := logger.L()
 	// Repositories
 	tenantRepo := local.NewTenantRepository(db)
 
@@ -19,7 +21,7 @@ func NewContainer(db *sql.DB) *Container {
 	tenantUseCase := usecases.NewTenantUseCase(tenantRepo)
 
 	// Controllers
-	tenantController := controllers.NewTenantController(tenantUseCase)
+	tenantController := controllers.NewTenantController(tenantUseCase, log)
 
 	return &Container{
 		TenantController: tenantController,
