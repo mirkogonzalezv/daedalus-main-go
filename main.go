@@ -1,8 +1,8 @@
 package main
 
 import (
+	"daedalus-engine-go/internal/common/database"
 	"daedalus-engine-go/internal/config"
-	"daedalus-engine-go/internal/core/database"
 	"daedalus-engine-go/internal/core/logger"
 	"os"
 
