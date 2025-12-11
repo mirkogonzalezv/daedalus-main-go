@@ -4,8 +4,8 @@ import (
 	"context"
 	logger "daedalus-engine-go/internal/common/logger"
 	domain "daedalus-engine-go/internal/core/domain/entities"
+	domainErrors "daedalus-engine-go/internal/core/domain/errors"
 	"daedalus-engine-go/internal/core/domain/repository"
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
@@ -26,15 +26,15 @@ func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug str
 	log := logger.L()
 
 	if name == "" {
-		return nil, errors.New("nombre es requerido")
+		return nil, domainErrors.ErrTenantNameRequired()
 	}
 
 	if slug == "" {
-		return nil, errors.New("slug es requerido")
+		return nil, domainErrors.ErrTenantInvalidSlug()
 	}
 
 	if plan == "" {
-		return nil, errors.New("plan es requerido")
+		return nil, domainErrors.ErrTenantCodeInvalidPlan()
 	}
 
 	// Normalizar slug a logwecase y trim espaces
@@ -48,7 +48,7 @@ func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug str
 	}
 
 	if existe != nil {
-		return nil, errors.New("tenant slug ya existe")
+		return nil, domainErrors.ErrTenantSlugExist()
 	}
 
 	// Creamos la instancia domain de tenant
@@ -71,9 +71,6 @@ func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug str
 }
 
 func (uc *TenantUseCase) ObtenerTenantPorId(ctx context.Context, id string) (*domain.Tenant, error) {
-	if id == "" {
-		return nil, errors.New("id es requerido")
-	}
 
 	tenant, err := uc.repo.GetById(ctx, id)
 	if err != nil {
@@ -81,7 +78,7 @@ func (uc *TenantUseCase) ObtenerTenantPorId(ctx context.Context, id string) (*do
 	}
 
 	if tenant == nil {
-		return nil, errors.New("tenant no existe")
+		return nil, domainErrors.ErrTenantNotFound()
 	}
 
 	return tenant, nil
@@ -89,7 +86,7 @@ func (uc *TenantUseCase) ObtenerTenantPorId(ctx context.Context, id string) (*do
 
 func (uc *TenantUseCase) ObtenerTenantPorSlug(ctx context.Context, slug string) (*domain.Tenant, error) {
 	if slug == "" {
-		return nil, errors.New("slug es requerido")
+		return nil, domainErrors.ErrTenantInvalidSlug()
 	}
 
 	// Normalizamos el slug a buscar
@@ -101,7 +98,7 @@ func (uc *TenantUseCase) ObtenerTenantPorSlug(ctx context.Context, slug string) 
 	}
 
 	if tenant == nil {
-		return nil, errors.New("tenant no encontrado")
+		return nil, domainErrors.ErrTenantNotFound()
 	}
 
 	return tenant, nil
@@ -110,11 +107,11 @@ func (uc *TenantUseCase) ObtenerTenantPorSlug(ctx context.Context, slug string) 
 // Actualizar Tenant
 func (uc *TenantUseCase) ActualizarTenant(ctx context.Context, t *domain.Tenant) error {
 	if t == nil {
-		return errors.New("tenant es requerido")
+		return domainErrors.ErrTenantNameRequired()
 	}
 
 	if t.ID == "" {
-		return errors.New("tenant ID es requerido")
+		return domainErrors.ErrTenantIdIsRequired()
 	}
 
 	// Validamos que el slug único (si cambió)
@@ -125,7 +122,7 @@ func (uc *TenantUseCase) ActualizarTenant(ctx context.Context, t *domain.Tenant)
 		}
 
 		if existe != nil && existe.ID != t.ID {
-			return errors.New("tenant slug ya esta en uso")
+			return domainErrors.ErrTenantSlugExist()
 		}
 	}
 

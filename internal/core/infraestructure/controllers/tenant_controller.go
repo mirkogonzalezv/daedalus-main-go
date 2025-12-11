@@ -3,6 +3,8 @@ package controllers
 import (
 	logger "daedalus-engine-go/internal/common/logger"
 	usecases "daedalus-engine-go/internal/core/application/use_cases"
+	domainErrors "daedalus-engine-go/internal/core/domain/errors"
+	httpErrors "daedalus-engine-go/internal/core/infraestructure/http"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +28,9 @@ func (ctr *TenantController) CrearTenant(c *gin.Context) {
 	var req CreateTenantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Error("Error parsing request", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		validationErr := domainErrors.NewValidationError("REQUEST_001", "Formato de request inválido")
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(validationErr)
+		c.JSON(statusCode, errorResponse)
 		return
 	}
 
@@ -34,7 +38,8 @@ func (ctr *TenantController) CrearTenant(c *gin.Context) {
 	tenant, err := ctr.uc.CreateTenant(c.Request.Context(), req.Name, req.Slug, req.Plan)
 	if err != nil {
 		log.Error("Error creando tenant", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
 		return
 	}
 
@@ -53,18 +58,13 @@ func (ctr *TenantController) ObtenerTenantPorId(c *gin.Context) {
 
 	id, _ := c.Params.Get("id")
 
-	if id == "" {
-		log.Error("Es necesario pasar un ID por parametro")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "falta el parametro de busqueda"})
-		return
-	}
-
 	// Ejecutamos el caso de uso
 	tenant, err := ctr.uc.ObtenerTenantPorId(c, id)
 
 	if err != nil {
 		log.Error("Tenant no encontrado")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Error al obtener tenant"})
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
 		return
 	}
 
