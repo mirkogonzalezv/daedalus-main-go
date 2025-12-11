@@ -20,6 +20,8 @@ type Config struct {
 	DBPassword           string `env:"DB_PASSWORD"`
 	DBName               string `env:"DB_NAME"`
 	DBSSLMode            string `env:"DB_SSLMODE"`
+
+	MigrationPath string `env:"MIGRATIONS_PATH" envDefault:"./internal/infra/migrations"`
 }
 
 func CargarVariables() (*Config, error) {

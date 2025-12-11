@@ -42,4 +42,27 @@ func main() {
 
 	defer db.Close()
 
+	log.Info("Conexión a base de datos establecida")
+
+	migrationCfg := database.MigrationConfig{
+		MigratiosPath: cfg.MigrationPath,
+		Logger:        log,
+	}
+
+	log.Info("Verificando y ejecutando migraciones...", zap.String("path", cfg.MigrationPath))
+
+	if err := database.RunMigrations(db, migrationCfg); err != nil {
+		log.Fatal("Error ejecutando migraciones", zap.Error(err))
+	}
+
+	// Verificar versión actual de migraciones
+	version, dirty, err := database.GetMigrationVersion(db, migrationCfg)
+	if err != nil {
+		log.Warn("No se pudo obtener versión de migraciones", zap.Error(err))
+	} else {
+		log.Info("Estado de migraciones", zap.Uint("version", version), zap.Bool("dirty", dirty))
+	}
+
+	log.Info("Daedalus Engine iniciado correctamente... ✅")
+
 }

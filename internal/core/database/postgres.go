@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
 type PostgresDB struct {
@@ -20,4 +22,17 @@ func (p *PostgresDB) Exec(ctx context.Context, query string, args ...any) (Comma
 
 func (p *PostgresDB) Close() {
 	p.pool.Close()
+}
+
+func (p *PostgresDB) GetStdlibDB() (*sql.DB, error) {
+	config := p.pool.Config()
+
+	// Creamos conexión stdlib desde la configuración de pgx
+	connStr := stdlib.RegisterConnConfig(config.ConnConfig)
+	db, err := sql.Open("pgx", connStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
