@@ -22,13 +22,6 @@ func (ctr *TenantController) CrearTenant(c *gin.Context) {
 
 	log.Info("Iniciando creación de tenant")
 
-	role := c.GetString("global_role")
-
-	if role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
-		return
-	}
-
 	// Parseamos el body
 	var req CreateTenantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -53,4 +46,34 @@ func (ctr *TenantController) CrearTenant(c *gin.Context) {
 		"plan":   tenant.SubscriptionPlan,
 		"status": tenant.Status,
 	})
+}
+
+func (ctr *TenantController) ObtenerTenantPorId(c *gin.Context) {
+	log := logger.L()
+
+	id, _ := c.Params.Get("id")
+
+	if id == "" {
+		log.Error("Es necesario pasar un ID por parametro")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "falta el parametro de busqueda"})
+		return
+	}
+
+	// Ejecutamos el caso de uso
+	tenant, err := ctr.uc.ObtenerTenantPorId(c, id)
+
+	if err != nil {
+		log.Error("Tenant no encontrado")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error al obtener tenant"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"tenant": tenant,
+	})
+}
+
+// Obtener tenant por slug
+func (ctr *TenantController) ObtenerTenantPorSlug(c *gin.Context) {
+
 }

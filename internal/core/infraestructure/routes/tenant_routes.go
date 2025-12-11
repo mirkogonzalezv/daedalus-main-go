@@ -14,8 +14,8 @@ func RegisterTenantRoutes(rg *gin.RouterGroup, ctr *controllers.TenantController
 	tenant.POST("", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.CrearTenant)
 
 	// TODO: Más adelante:
-	// obtener lista de tenants
 	// obtener tenant por id
+	tenant.GET(":id", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.ObtenerTenantPorId)
 	// obtener tenant por slug
 	// actualizar tenant por id
 }
