@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -17,27 +18,19 @@ type MigrationConfig struct {
 }
 
 // RunMigrations ejecuta las migraciones pendientes
-func RunMigrations(db Database, cfg MigrationConfig) error {
+func RunMigrations(db *sql.DB, cfg MigrationConfig) error {
 	log := cfg.Logger
-
-	stdDB, err := db.GetStdlibDB()
-
-	if err != nil {
-		log.Error("Error obteniendo conexión stdlib", zap.Error(err))
-		return fmt.Errorf("error getting stdlib connection: %w", err)
-	}
-	defer stdDB.Close()
 
 	log.Info("Verificando existencia del schema daedalus...")
 
-	_, err = stdDB.ExecContext(context.Background(), "CREATE SCHEMA IF NOT EXISTS daedalus")
+	_, err := db.ExecContext(context.Background(), "CREATE SCHEMA IF NOT EXISTS daedalus")
 	if err != nil {
 		log.Error("Error creando schema daedalus", zap.Error(err))
 		return fmt.Errorf("error creating schema daedalus: %w", err)
 	}
 	log.Info("Schema daedalus verificado/creado correctamente")
 
-	driver, err := postgres.WithInstance(stdDB, &postgres.Config{
+	driver, err := postgres.WithInstance(db, &postgres.Config{
 		MigrationsTable: "schema_migrations",
 		SchemaName:      "daedalus",
 	})
@@ -74,17 +67,10 @@ func RunMigrations(db Database, cfg MigrationConfig) error {
 	return nil
 }
 
-func RollbackMigration(db Database, cfg MigrationConfig, steps int) error {
+func RollbackMigration(db *sql.DB, cfg MigrationConfig, steps int) error {
 	log := cfg.Logger
 
-	stdDB, err := db.GetStdlibDB()
-	if err != nil {
-		log.Error("Error obteniendo conexión stdlib", zap.Error(err))
-		return fmt.Errorf("error getting stdlib connection: %w", err)
-	}
-	defer stdDB.Close()
-
-	driver, err := postgres.WithInstance(stdDB, &postgres.Config{
+	driver, err := postgres.WithInstance(db, &postgres.Config{
 		MigrationsTable: "schema_migrations",
 		SchemaName:      "daedalus",
 	})
@@ -117,50 +103,4 @@ func RollbackMigration(db Database, cfg MigrationConfig, steps int) error {
 
 	log.Info("Rollback completado", zap.Int("steps", steps))
 	return nil
-}
-
-func GetMigrationVersion(db Database, cfg MigrationConfig) (uint, bool, error) {
-	log := cfg.Logger
-
-	stdDB, err := db.GetStdlibDB()
-	if err != nil {
-		log.Error("Error obteniendo conexión stdlib", zap.Error(err))
-		return 0, false, fmt.Errorf("error getting stdlib connection: %w", err)
-	}
-	defer stdDB.Close()
-
-	driver, err := postgres.WithInstance(stdDB, &postgres.Config{
-		MigrationsTable: "schema_migrations",
-		SchemaName:      "daedalus",
-	})
-	if err != nil {
-		log.Error("Error creando driver de migraciones", zap.Error(err))
-		return 0, false, fmt.Errorf("error creating migration driver: %w", err)
-	}
-
-	// Crear instancia de migrate
-	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("file://%s", cfg.MigratiosPath),
-		"postgres",
-		driver,
-	)
-	if err != nil {
-		log.Error("Error creando instancia de migrate", zap.Error(err))
-		return 0, false, fmt.Errorf("error creating migration instance: %w", err)
-	}
-	defer m.Close()
-
-	version, dirty, err := m.Version()
-	if err != nil {
-		if errors.Is(err, migrate.ErrNilVersion) {
-			log.Info("No hay migraciones aplicadas")
-			return 0, false, nil
-		}
-		log.Error("Error obteniendo versión", zap.Error(err))
-		return 0, false, fmt.Errorf("error getting migration version: %w", err)
-	}
-
-	log.Info("Version de migración atual", zap.Uint("version", version), zap.Bool("dirty", dirty))
-
-	return version, dirty, nil
 }

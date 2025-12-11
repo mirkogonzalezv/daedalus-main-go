@@ -1,10 +1,10 @@
 package database
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type PostgresConfig struct {
@@ -16,16 +16,16 @@ type PostgresConfig struct {
 	SSLMode  string
 }
 
-func NuevaConexionPostgres(cfg PostgresConfig) (*pgxpool.Pool, error) {
+func NuevaConexionPostgres(cfg PostgresConfig) (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 
-	pool, err := pgxpool.New(context.Background(), dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := pool.Ping(context.Background()); err != nil {
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-	return pool, nil
+	return db, nil
 }

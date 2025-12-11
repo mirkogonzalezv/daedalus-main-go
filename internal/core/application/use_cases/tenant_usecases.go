@@ -1,13 +1,15 @@
-package tenant
+package usecases
 
 import (
 	"context"
 	domain "daedalus-engine-go/internal/core/domain/entities"
 	"daedalus-engine-go/internal/core/domain/repository"
+	"daedalus-engine-go/internal/core/logger"
 	"errors"
 	"strings"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type TenantUseCase struct {
@@ -21,19 +23,25 @@ func NewTenantUseCase(repo repository.TenantRepository) *TenantUseCase {
 // Aqui es donde aplicaremos la logica de negocio
 func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug string, plan string) (*domain.Tenant, error) {
 	// Validaciones básicas
+	log := logger.L()
 
 	if name == "" {
-		return nil, errors.New("tenant name es requerido")
+		return nil, errors.New("nombre es requerido")
 	}
 
 	if slug == "" {
-		return nil, errors.New("tenant slug es requerido")
+		return nil, errors.New("slug es requerido")
+	}
+
+	if plan == "" {
+		return nil, errors.New("plan es requerido")
 	}
 
 	// Normalizar slug a logwecase y trim espaces
 	slug = strings.ToLower(strings.TrimSpace(slug))
 
 	// validar slug único
+	log.Info("Verificando slug único", zap.String("slug", slug))
 	existe, err := uc.repo.GetBySlug(ctx, slug)
 	if err != nil {
 		return nil, err

@@ -4,12 +4,13 @@ import (
 	"daedalus-engine-go/internal/config"
 	"daedalus-engine-go/internal/core/logger"
 	infra "daedalus-engine-go/internal/infra/database"
+	"database/sql"
 	"fmt"
 
 	"go.uber.org/zap"
 )
 
-func NuevaBaseDeDatos(cfg *config.Config) (Database, error) {
+func NuevaBaseDeDatos(cfg *config.Config) (*sql.DB, error) {
 
 	log := logger.L()
 
@@ -30,11 +31,7 @@ func NuevaBaseDeDatos(cfg *config.Config) (Database, error) {
 			return nil, err
 		}
 
-		return &PostgresDB{pool: pool}, nil
-	case "other_db":
-		err := fmt.Errorf("other_db aun no implementado")
-		log.Warn("Intentando usar una abse de datos no implementada", zap.Error(err))
-		return nil, fmt.Errorf("other_db aun no implementado, puedes configurar Mysql , Mongo u otro")
+		return pool, nil
 	default:
 		err := fmt.Errorf("motor no soportado: %s", cfg.DBType)
 		log.Error("motor de base de datos no soportado", zap.Error(err))
