@@ -29,3 +29,10 @@ func ToGetTenantResponse(tenant *domain.Tenant) responses.GetTenantResponse {
 		Tenant: ToTenantResponse(tenant),
 	}
 }
+
+func ToUpdateTenantResponse(tenant *domain.Tenant) responses.UpdateTenantResponse {
+	return responses.UpdateTenantResponse{
+		Tenant:  ToTenantResponse(tenant),
+		Message: "Tenant actualizado exitosamente",
+	}
+}

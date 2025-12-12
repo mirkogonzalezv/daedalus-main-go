@@ -81,3 +81,49 @@ func (ctr *TenantController) ObtenerTenantPorSlug(c *gin.Context) {
 	response := mappers.ToGetTenantResponse(tenant)
 	c.JSON(http.StatusOK, response)
 }
+
+func (ctr *TenantController) ActualizarTenant(c *gin.Context) {
+	id := c.Param("id")
+
+	var req requests.UpdateTenantRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		ctr.log.Error("Error parsing request", zap.Error(err))
+		validationErr := domainErrors.NewValidationError("REQUEST_001", "Formato de request inválido")
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(validationErr)
+		c.JSON(statusCode, errorResponse)
+		return
+	}
+
+	existingTenant, err := ctr.uc.ObtenerTenantPorId(c, id)
+
+	if err != nil {
+		ctr.log.Error("Tenant no encontrado")
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
+		return
+	}
+
+	if req.Name != "" {
+		existingTenant.Name = req.Name
+	}
+
+	if req.Slug != "" {
+		existingTenant.Slug = req.Slug
+	}
+
+	if req.Plan != "" {
+		existingTenant.SubscriptionPlan = req.Plan
+	}
+
+	err = ctr.uc.ActualizarTenant(c.Request.Context(), existingTenant)
+	if err != nil {
+		ctr.log.Error("Error actualizando tenant", zap.Error(err))
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
+		return
+	}
+
+	response := mappers.ToUpdateTenantResponse(existingTenant)
+	c.JSON(http.StatusOK, response)
+}

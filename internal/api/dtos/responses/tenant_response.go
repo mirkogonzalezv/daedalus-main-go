@@ -20,3 +20,8 @@ type CreateTenantResponse struct {
 type GetTenantResponse struct {
 	Tenant TenantResponse `json:"tenant"`
 }
+
+type UpdateTenantResponse struct {
+	Tenant  TenantResponse `json:"tenant"`
+	Message string         `json:"message"`
+}

@@ -4,7 +4,7 @@ import "time"
 
 type User struct {
 	ID           string
-	TenantID     string // uuid fk
+	TenantID     *string // uuid fk, se cambia a pointer nullable
 	Name         string
 	Email        string
 	PasswordHash string

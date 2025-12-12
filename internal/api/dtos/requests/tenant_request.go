@@ -13,3 +13,10 @@ type GetTenantByIDRequest struct {
 type GetTenantBySlugRequest struct {
 	Slug string `uri:"slug" binding:"required"`
 }
+
+// DTO para actualizar el tenant
+type UpdateTenantRequest struct {
+	Name string `json:"name,omitempty"`
+	Slug string `json:"slug,omitempty"`
+	Plan string `json:"plan,omitempty"`
+}
