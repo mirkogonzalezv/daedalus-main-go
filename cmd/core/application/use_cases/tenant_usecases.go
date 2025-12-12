@@ -106,7 +106,7 @@ func (uc *TenantUseCase) ObtenerTenantPorSlug(ctx context.Context, slug string) 
 
 // Actualizar Tenant
 func (uc *TenantUseCase) ActualizarTenant(ctx context.Context, t *domain.Tenant) error {
-	if t == nil {
+	if t.Name == "" {
 		return domainErrors.ErrTenantNameRequired()
 	}
 
@@ -121,7 +121,7 @@ func (uc *TenantUseCase) ActualizarTenant(ctx context.Context, t *domain.Tenant)
 			return err
 		}
 
-		if existe != nil && existe.ID != t.ID {
+		if existe != nil && existe.Slug != t.Slug {
 			return domainErrors.ErrTenantSlugExist()
 		}
 	}
