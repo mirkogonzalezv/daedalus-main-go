@@ -65,3 +65,19 @@ func (ctr *TenantController) ObtenerTenantPorId(c *gin.Context) {
 	response := mappers.ToGetTenantResponse(tenant)
 	c.JSON(http.StatusOK, response)
 }
+
+func (ctr *TenantController) ObtenerTenantPorSlug(c *gin.Context) {
+	slug := c.Param("slug")
+
+	tenant, err := ctr.uc.ObtenerTenantPorSlug(c, slug)
+
+	if err != nil {
+		ctr.log.Error("Tenant no encontrado")
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
+		return
+	}
+
+	response := mappers.ToGetTenantResponse(tenant)
+	c.JSON(http.StatusOK, response)
+}
