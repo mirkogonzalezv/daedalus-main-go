@@ -1,7 +1,7 @@
 package main
 
 import (
-	"daedalus-engine-go/internal/app"
+	"daedalus-engine-go/cmd/app"
 	"log"
 )
 
