@@ -22,6 +22,6 @@ func (r *APIRouter) RegisterRouter(router *gin.Engine) {
 
 	// Rutas de Tenant
 	RegisterTenantRoutes(api, r.container.TenantController)
-
 	// Aquí van las otras rutas:
+	RegisterUserRoutes(api, r.container.UserController)
 }

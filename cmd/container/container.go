@@ -10,6 +10,7 @@ import (
 
 type Container struct {
 	TenantController *controllers.TenantController
+	UserController   *controllers.UserController
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -23,7 +24,12 @@ func NewContainer(db *sql.DB) *Container {
 	// Controllers
 	tenantController := controllers.NewTenantController(tenantUseCase, log)
 
+	userRepo := local.NewUserRepository(db)
+	userUseCase := usecases.NewUserUseCase(userRepo, log)
+	userController := controllers.NewUserController(userUseCase, log)
+
 	return &Container{
 		TenantController: tenantController,
+		UserController:   userController,
 	}
 }
