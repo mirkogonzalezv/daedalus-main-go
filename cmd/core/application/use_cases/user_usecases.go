@@ -41,11 +41,21 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, name, tenant_id, email, p
 		return nil, domainErrors.ErrUserRoleNotFound()
 	}
 
-	if role != "owner" && role != "admin" && role != "user" {
+	if role != "owner" && role != "admin" && role != "user" && role != "root" {
 		return nil, domainErrors.ErrUserNotMatchRole()
 	}
 
-	existe, err := uc.repo.GetByEmailAndTenant(ctx, tenant_id, email)
+	if role != "root" && tenant_id == "" {
+		return nil, domainErrors.ErrTenantIdIsRequired()
+	}
+
+	var existe *domain.User
+	var err error
+
+	if role == "root" {
+		uc.log.Info("Nuevo usuario root: Verificando email único globalmente")
+		existe, err = uc.repo.GetByEmail(ctx, email)
+	}
 
 	if err != nil {
 		return nil, domainErrors.ErrUserNotFound()
@@ -67,10 +77,15 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, name, tenant_id, email, p
 		return nil, domainErrors.ErrUserHashPassword()
 	}
 
+	var tenantIDPtr *string
+	if role != "root" && tenant_id != "" {
+		tenantIDPtr = &tenant_id
+	}
+
 	// creamos la instancia domai de user
 	newUser := &domain.User{
 		ID:           uuid.NewString(),
-		TenantID:     &tenant_id,
+		TenantID:     tenantIDPtr,
 		Name:         name,
 		Email:        email,
 		PasswordHash: hashed,

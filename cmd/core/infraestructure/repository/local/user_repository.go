@@ -107,3 +107,31 @@ func (r *PostgresUserRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
+
+func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	query := `
+		SELECT id, tenant_id, name, email, password_hash, role, status, created_at, updated_at FROM daedalus.users WHERE email = $1
+	`
+
+	row := r.db.QueryRowContext(ctx, query, email)
+
+	var u domain.User
+
+	err := row.Scan(
+		&u.ID,
+		&u.TenantID,
+		&u.Name,
+		&u.Email,
+		&u.PasswordHash,
+		&u.Role,
+		&u.Status,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &u, err
+
+}
