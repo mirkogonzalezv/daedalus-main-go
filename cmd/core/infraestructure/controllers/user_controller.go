@@ -105,6 +105,8 @@ func (ctr *UserController) ObtenerListaUsuarios(c *gin.Context) {
 
 	if role == "" {
 		usuarios, err = ctr.uc.ObtenerListaUsuarios(c)
+	} else {
+		usuarios, err = ctr.uc.ObtenerUsuariosPorRole(c, role)
 	}
 
 	if err != nil {
