@@ -13,9 +13,12 @@ func RegisterUserRoutes(rg *gin.RouterGroup, ctr *controllers.UserController) {
 
 	user.POST("", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.CrearUsuario)
 
+	user.GET("", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.ObtenerUsuario)
+
+	user.GET("/all", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.ObtenerListaUsuarios)
+
 	user.GET(":id", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.ObtenerUsuarioPorId)
 
-	user.GET("", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.ObtenerUsuarioPorEmailYTenant)
-
 	user.DELETE(":id", middlewares.AuthMiddleware(), middlewares.RequiredGlobalAdmin(), ctr.EliminarUsuario)
+
 }

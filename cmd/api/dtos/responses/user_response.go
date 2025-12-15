@@ -12,6 +12,10 @@ type UserResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type ListUsersResponse struct {
+	Users []UserResponse `json:"users"`
+}
+
 type CreateUserResponse struct {
 	User    UserResponse `json:"user"`
 	Message string       `json:"message"`

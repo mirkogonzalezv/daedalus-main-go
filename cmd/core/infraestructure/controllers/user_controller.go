@@ -4,6 +4,7 @@ import (
 	requests "daedalus-engine-go/cmd/api/dtos/requests"
 	"daedalus-engine-go/cmd/api/mappers"
 	usecases "daedalus-engine-go/cmd/core/application/use_cases"
+	domain "daedalus-engine-go/cmd/core/domain/entities"
 	domainErrors "daedalus-engine-go/cmd/core/domain/errors"
 	httpErrors "daedalus-engine-go/cmd/core/infraestructure/http"
 	"net/http"
@@ -62,19 +63,28 @@ func (ctr *UserController) ObtenerUsuarioPorId(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (ctr *UserController) ObtenerUsuarioPorEmailYTenant(c *gin.Context) {
+func (ctr *UserController) ObtenerUsuario(c *gin.Context) {
 	email := c.Query("email")        // devuelve "" si no existe
 	tenantID := c.Query("tenant_id") // devuelve "" si no existe
 
 	if email == "" {
-		ctr.log.Error("Email es obligatorio")
-		validationErr := domainErrors.NewValidationError("REQUEST_002", "Email es requerido para la busqueda")
+		ctr.log.Error("Email es requerido para la búsqueda")
+		validationErr := domainErrors.NewValidationError("REQUEST_002", "Email es requerido")
 		statusCode, errorResponse := httpErrors.MapErrorToHttp(validationErr)
 		c.JSON(statusCode, errorResponse)
 		return
 	}
 
-	usuario, err := ctr.uc.ObtenerUsuarioPorEmailYTenant(c, tenantID, email)
+	var usuario *domain.User
+	var err error
+
+	if tenantID != "" {
+		// Buscar por email y por tenant
+		usuario, err = ctr.uc.ObtenerUsuarioPorEmailYTenant(c, tenantID, email)
+	} else {
+		usuario, err = ctr.uc.ObtenerUsuarioPorEmail(c, email)
+	}
+
 	if err != nil {
 		ctr.log.Error("Usuario no encontrado")
 		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
@@ -83,6 +93,28 @@ func (ctr *UserController) ObtenerUsuarioPorEmailYTenant(c *gin.Context) {
 	}
 
 	response := mappers.ToGetUserResponse(usuario)
+	c.JSON(http.StatusOK, response)
+}
+
+// Obtener Lista de usuarios totales o por role
+func (ctr *UserController) ObtenerListaUsuarios(c *gin.Context) {
+	role := c.Query("role")
+
+	var usuarios []*domain.User
+	var err error
+
+	if role == "" {
+		usuarios, err = ctr.uc.ObtenerListaUsuarios(c)
+	}
+
+	if err != nil {
+		ctr.log.Error("Usuario no encontrado")
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
+		return
+	}
+
+	response := mappers.ToListUsersResponse(usuarios)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -104,19 +136,4 @@ func (ctr *UserController) EliminarUsuario(c *gin.Context) {
 		c.JSON(statusCode, errorResponse)
 		return
 	}
-}
-
-// # Funciones de ROOT
-func (ctr *UserController) ObtenerUsuarioPorEmail(c *gin.Context) {
-	email := c.Query("email")
-
-	usuario, err := ctr.uc.ObtenerUsuarioPorEmail(c, email)
-	if err != nil {
-		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
-		c.JSON(statusCode, errorResponse)
-		return
-	}
-
-	response := mappers.ToGetUserResponse(usuario)
-	c.JSON(http.StatusOK, response)
 }

@@ -30,6 +30,18 @@ func ToGetUserResponse(user *domain.User) responses.GetUserResponse {
 	}
 }
 
+func ToListUsersResponse(users []*domain.User) responses.ListUsersResponse {
+	userResponses := make([]responses.UserResponse, len(users))
+
+	for i, user := range users {
+		userResponses[i] = ToUserResponse(user)
+	}
+
+	return responses.ListUsersResponse{
+		Users: userResponses,
+	}
+}
+
 func ToUpdateUserResponse(user *domain.User) responses.UpdateUserResponse {
 	return responses.UpdateUserResponse{
 		User:    ToUserResponse(user),
