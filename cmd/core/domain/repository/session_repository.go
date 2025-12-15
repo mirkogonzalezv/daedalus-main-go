@@ -6,7 +6,7 @@ import (
 )
 
 type SessionRepository interface {
-	Crete(ctx context.Context, s *domain.Session) error
+	Create(ctx context.Context, s *domain.Session) error
 	GetByRefreshToken(ctx context.Context, refreshHash string) (*domain.Session, error)
 	Revoke(ctx context.Context, id string) error
 }

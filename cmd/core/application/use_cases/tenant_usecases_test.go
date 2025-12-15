@@ -44,11 +44,17 @@ func (m *mockTenantRepository) Update(ctx context.Context, tenant *domain.Tenant
 	return nil
 }
 
-func TestCreateTenant_Success(t *testing.T) {
+func setupTest() (*mockTenantRepository, *TenantUseCase) {
 	logger.Init("test")
-	// Arrange (Preparar)
+	log := logger.L()
 	mockRepo := newMockTenantRepository()
-	useCase := NewTenantUseCase(mockRepo)
+	useCase := NewTenantUseCase(mockRepo, log)
+
+	return mockRepo, useCase
+}
+
+func TestCreateTenant_Success(t *testing.T) {
+	_, useCase := setupTest()
 
 	ctx := context.Background()
 

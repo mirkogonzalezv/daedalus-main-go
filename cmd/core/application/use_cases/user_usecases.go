@@ -163,6 +163,46 @@ func (uc *UserUseCase) EliminarUsuario(ctx context.Context, id string) error {
 	return nil
 }
 
+// Funciones ROOT
+func (uc *UserUseCase) ObtenerUsuarioPorEmail(ctx context.Context, email string) (*domain.User, error) {
+	usuario, err := uc.repo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if usuario == nil {
+		return nil, domainErrors.ErrUserNotFound()
+	}
+
+	return usuario, nil
+}
+
+func (uc *UserUseCase) ObtenerListaUsuarios(ctx context.Context) ([]*domain.User, error) {
+	usuarios, err := uc.repo.GetRootUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(usuarios) == 0 {
+		return nil, domainErrors.ErrListUserNotFound()
+	}
+	return usuarios, nil
+}
+
+func (uc *UserUseCase) ObtenerUsuariosPorRole(ctx context.Context, role string) ([]*domain.User, error) {
+	usuarios, err := uc.repo.GetUsersByRole(ctx, role)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(usuarios) == 0 {
+		return nil, domainErrors.ErrListUserNotFound()
+	}
+
+	return usuarios, nil
+}
+
 func validarPassword(pw string) error {
 	var (
 		tieneMayuscula bool

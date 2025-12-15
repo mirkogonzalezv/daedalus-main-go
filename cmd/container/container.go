@@ -17,10 +17,8 @@ func NewContainer(db *sql.DB) *Container {
 	log := logger.L()
 	// Repositories
 	tenantRepo := local.NewTenantRepository(db)
-
 	// Use Cases
-	tenantUseCase := usecases.NewTenantUseCase(tenantRepo)
-
+	tenantUseCase := usecases.NewTenantUseCase(tenantRepo, log)
 	// Controllers
 	tenantController := controllers.NewTenantController(tenantUseCase, log)
 

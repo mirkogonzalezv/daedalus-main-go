@@ -14,6 +14,7 @@ const (
 	UserIDRequiredError      = "USER_011"
 	UserEmailDuplicatedError = "USER_012"
 	UserErrorDelete          = "USER_013"
+	UserErrorListNotFound    = "USER_014"
 )
 
 func ErrUserNameRequired() *DomainError {
@@ -62,4 +63,8 @@ func ErrUserEmailReadyExist() *DomainError {
 
 func ErrUserDeleteError() *DomainError {
 	return NewValidationError(UserErrorDelete, "Error al eliminar usuario")
+}
+
+func ErrListUserNotFound() *DomainError {
+	return NewValidationError(UserErrorListNotFound, "No hay usuarios registrados")
 }

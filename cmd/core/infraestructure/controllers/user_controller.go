@@ -105,3 +105,18 @@ func (ctr *UserController) EliminarUsuario(c *gin.Context) {
 		return
 	}
 }
+
+// # Funciones de ROOT
+func (ctr *UserController) ObtenerUsuarioPorEmail(c *gin.Context) {
+	email := c.Query("email")
+
+	usuario, err := ctr.uc.ObtenerUsuarioPorEmail(c, email)
+	if err != nil {
+		statusCode, errorResponse := httpErrors.MapErrorToHttp(err)
+		c.JSON(statusCode, errorResponse)
+		return
+	}
+
+	response := mappers.ToGetUserResponse(usuario)
+	c.JSON(http.StatusOK, response)
+}

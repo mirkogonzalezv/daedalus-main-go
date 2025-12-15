@@ -108,11 +108,15 @@ func (r *PostgresUserRepository) Delete(ctx context.Context, id string) error {
 	return err
 }
 
+/*
+# Funciones ROOT
+*/
 func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
 		SELECT id, tenant_id, name, email, password_hash, role, status, created_at, updated_at FROM daedalus.users WHERE email = $1
 	`
 
+	// QueryRowContext:  es utilizado para devolver solo 1 linea
 	row := r.db.QueryRowContext(ctx, query, email)
 
 	var u domain.User
@@ -133,5 +137,92 @@ func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (
 		return nil, nil
 	}
 	return &u, err
+}
 
+func (r *PostgresUserRepository) GetRootUsers(ctx context.Context) ([]*domain.User, error) {
+	query := `
+		SELECT id, tenant_id, name, email, password_hash, role, status, created_at, updated_at FROM daedalus.users
+	`
+
+	// QueryContext: se utiliza cuando esperamos multiples filas de resultado.
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close() //Cerramos rows despues de terminar de usarlo
+
+	var users []*domain.User
+
+	for rows.Next() {
+		var u domain.User
+
+		// Se escane cada fila de la estructura de usuario
+		err := rows.Scan(
+			&u.ID,
+			&u.TenantID,
+			&u.Name,
+			&u.Email,
+			&u.PasswordHash,
+			&u.Role,
+			&u.Status,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (r *PostgresUserRepository) GetUsersByRole(ctx context.Context, role string) ([]*domain.User, error) {
+	query := `
+		SELECT id, tenant_id, name, email, password_hash, role, status, created_at, updated_at FROM daedalus.users WHERE role = $1
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, role)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var users []*domain.User
+
+	for rows.Next() {
+		var u domain.User
+
+		err := rows.Scan(
+			&u.ID,
+			&u.TenantID,
+			&u.Name,
+			&u.Email,
+			&u.PasswordHash,
+			&u.Role,
+			&u.Status,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

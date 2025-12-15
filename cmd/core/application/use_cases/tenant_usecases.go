@@ -2,7 +2,6 @@ package usecases
 
 import (
 	"context"
-	logger "daedalus-engine-go/cmd/common/logger"
 	domain "daedalus-engine-go/cmd/core/domain/entities"
 	domainErrors "daedalus-engine-go/cmd/core/domain/errors"
 	"daedalus-engine-go/cmd/core/domain/repository"
@@ -14,16 +13,15 @@ import (
 
 type TenantUseCase struct {
 	repo repository.TenantRepository
+	log  *zap.Logger
 }
 
-func NewTenantUseCase(repo repository.TenantRepository) *TenantUseCase {
-	return &TenantUseCase{repo: repo}
+func NewTenantUseCase(repo repository.TenantRepository, log *zap.Logger) *TenantUseCase {
+	return &TenantUseCase{repo: repo, log: log}
 }
 
 // Aqui es donde aplicaremos la logica de negocio
 func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug string, plan string) (*domain.Tenant, error) {
-	// Validaciones básicas
-	log := logger.L()
 
 	if name == "" {
 		return nil, domainErrors.ErrTenantNameRequired()
@@ -41,7 +39,7 @@ func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug str
 	slug = strings.ToLower(strings.TrimSpace(slug))
 
 	// validar slug único
-	log.Info("Verificando slug único", zap.String("slug", slug))
+	uc.log.Info("Verificando slug único", zap.String("slug", slug))
 	existe, err := uc.repo.GetBySlug(ctx, slug)
 	if err != nil {
 		return nil, err
