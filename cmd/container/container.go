@@ -2,10 +2,10 @@ package container
 
 import (
 	"daedalus-engine-go/cmd/common/logger"
-	"daedalus-engine-go/cmd/core/application/services"
-	usecases "daedalus-engine-go/cmd/core/application/use_cases"
-	"daedalus-engine-go/cmd/core/infraestructure/controllers"
-	"daedalus-engine-go/cmd/core/infraestructure/repository/local"
+	"daedalus-engine-go/cmd/internal/application/services"
+	usecases "daedalus-engine-go/cmd/internal/application/use_cases"
+	"daedalus-engine-go/cmd/internal/infraestructure/controllers"
+	"daedalus-engine-go/cmd/internal/infraestructure/repository/local"
 	"database/sql"
 )
 

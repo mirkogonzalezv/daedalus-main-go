@@ -2,7 +2,7 @@ package mappers
 
 import (
 	"daedalus-engine-go/cmd/api/dtos/responses"
-	domain "daedalus-engine-go/cmd/core/domain/entities"
+	domain "daedalus-engine-go/cmd/internal/domain/entities"
 )
 
 func ToUserResponse(user *domain.User) responses.UserResponse {
