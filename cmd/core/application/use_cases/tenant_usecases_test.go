@@ -3,12 +3,19 @@ package usecases
 import (
 	"context"
 	"daedalus-engine-go/cmd/common/logger"
+	"daedalus-engine-go/cmd/core/application/services"
 	domain "daedalus-engine-go/cmd/core/domain/entities"
 	"testing"
 )
 
 type mockTenantRepository struct {
 	tenants map[string]*domain.Tenant
+}
+
+type mockAuditLogRepository struct{}
+
+func (m *mockAuditLogRepository) Insert(ctx context.Context, log *domain.AuditLog) error {
+	return nil
 }
 
 func newMockTenantRepository() *mockTenantRepository {
@@ -44,11 +51,17 @@ func (m *mockTenantRepository) Update(ctx context.Context, tenant *domain.Tenant
 	return nil
 }
 
+func newMockAuditLogRepository() *mockAuditLogRepository {
+	return &mockAuditLogRepository{}
+}
+
 func setupTest() (*mockTenantRepository, *TenantUseCase) {
 	logger.Init("test")
 	log := logger.L()
 	mockRepo := newMockTenantRepository()
-	useCase := NewTenantUseCase(mockRepo, log)
+	mockAuditRepo := newMockAuditLogRepository()
+	mockAudit := services.NewAuditService(mockAuditRepo, log)
+	useCase := NewTenantUseCase(mockRepo, log, mockAudit)
 
 	return mockRepo, useCase
 }
