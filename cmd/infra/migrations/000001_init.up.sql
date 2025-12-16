@@ -57,7 +57,7 @@ create table daedalus.subscriptions(
 	tenant_id uuid not null references daedalus.tenants(id) on delete cascade,
 	stripe_customer_id text,
 	stripe_subscription_id text,
-	ºperiod_start timestamp with time zone,
+	period_start timestamp with time zone,
 	period_end timestamp with time zone,
 	status text,
 	created_at timestamp with time zone default now(),
