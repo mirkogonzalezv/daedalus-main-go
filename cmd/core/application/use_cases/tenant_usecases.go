@@ -2,6 +2,8 @@ package usecases
 
 import (
 	"context"
+	loggertype "daedalus-engine-go/cmd/common/logger_type"
+	"daedalus-engine-go/cmd/core/application/services"
 	domain "daedalus-engine-go/cmd/core/domain/entities"
 	domainErrors "daedalus-engine-go/cmd/core/domain/errors"
 	"daedalus-engine-go/cmd/core/domain/repository"
@@ -12,12 +14,13 @@ import (
 )
 
 type TenantUseCase struct {
-	repo repository.TenantRepository
-	log  *zap.Logger
+	repo     repository.TenantRepository
+	log      *zap.Logger
+	auditSvc *services.AuditService
 }
 
-func NewTenantUseCase(repo repository.TenantRepository, log *zap.Logger) *TenantUseCase {
-	return &TenantUseCase{repo: repo, log: log}
+func NewTenantUseCase(repo repository.TenantRepository, log *zap.Logger, auditSvc *services.AuditService) *TenantUseCase {
+	return &TenantUseCase{repo: repo, log: log, auditSvc: auditSvc}
 }
 
 // Aqui es donde aplicaremos la logica de negocio
@@ -64,6 +67,19 @@ func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug str
 	if err != nil {
 		return nil, err
 	}
+
+	tenantCreado, err := uc.repo.GetBySlug(ctx, slug)
+
+	if err != nil {
+		return nil, err
+	}
+
+	uc.auditSvc.LogAction(ctx, tenantCreado.ID, "", loggertype.InfoTenantCreate(), "", map[string]interface{}{
+		"tenant_id":   nuevoTenant.ID,
+		"tenant_name": nuevoTenant.Name,
+		"tenant_slug": nuevoTenant.Slug,
+		"plan":        nuevoTenant.SubscriptionPlan,
+	})
 
 	return nuevoTenant, nil
 }

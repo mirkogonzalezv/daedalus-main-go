@@ -4,7 +4,7 @@ import "time"
 
 type AuditLog struct {
 	ID        string
-	TenantId  string
+	TenantId  *string
 	UserId    *string
 	Action    string
 	Meta      map[string]any //jsonb
