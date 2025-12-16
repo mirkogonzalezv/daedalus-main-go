@@ -5,7 +5,7 @@ import (
 	"daedalus-engine-go/cmd/common/logger"
 	"daedalus-engine-go/cmd/config"
 	"daedalus-engine-go/cmd/container"
-	"daedalus-engine-go/cmd/internal/infraestructure/routes"
+	"daedalus-engine-go/cmd/internal/pkg/routes"
 	"database/sql"
 	"os"
 	"strconv"
