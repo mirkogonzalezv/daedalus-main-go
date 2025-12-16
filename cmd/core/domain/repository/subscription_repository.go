@@ -8,7 +8,6 @@ import (
 type SubscriptionRepository interface {
 	Create(ctx context.Context, s *domain.Subscription) error
 	GetById(ctx context.Context, id string) (*domain.Subscription, error)
-	GetByUser(ctx context.Context, userID string, tenantID string) (*domain.Subscription, error)
-	Update(ctx context.Context, s *domain.Subscription) error
+	UpdateStatus(ctx context.Context, status string) error
 	Delete(ctx context.Context, id string) error
 }

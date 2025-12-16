@@ -5,6 +5,7 @@ import (
 	domain "daedalus-engine-go/cmd/core/domain/entities"
 	"daedalus-engine-go/cmd/core/domain/repository"
 	"database/sql"
+	"errors"
 )
 
 type PostgresSubscriptionRepository struct {
@@ -66,12 +67,21 @@ func (p *PostgresSubscriptionRepository) GetById(ctx context.Context, id string)
 	return &s, err
 }
 
-// GetByUser implements repository.SubscriptionRepository.
-func (p *PostgresSubscriptionRepository) GetByUser(ctx context.Context, userID string, tenantID string) (*domain.Subscription, error) {
-	panic("unimplemented")
-}
-
 // Update implements repository.SubscriptionRepository.
-func (p *PostgresSubscriptionRepository) Update(ctx context.Context, s *domain.Subscription) error {
-	panic("unimplemented")
+func (p *PostgresSubscriptionRepository) UpdateStatus(ctx context.Context, status string) error {
+	query := `
+		UPDATE daedalus.subscriptions SET status = $1
+	`
+	result, err := p.db.ExecContext(ctx, query, status)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+
+	if err == nil && rows == 0 {
+		return errors.New("subscriptions not found")
+	}
+
+	return err
 }
