@@ -68,13 +68,7 @@ func (uc *TenantUseCase) CreateTenant(ctx context.Context, name string, slug str
 		return nil, err
 	}
 
-	tenantCreado, err := uc.repo.GetBySlug(ctx, slug)
-
-	if err != nil {
-		return nil, err
-	}
-
-	uc.auditSvc.LogAction(ctx, tenantCreado.ID, "", loggertype.InfoTenantCreate(), "", map[string]interface{}{
+	uc.auditSvc.LogAction(ctx, nuevoTenant.ID, "", loggertype.InfoTenantCreate(), "", map[string]interface{}{
 		"tenant_id":   nuevoTenant.ID,
 		"tenant_name": nuevoTenant.Name,
 		"tenant_slug": nuevoTenant.Slug,

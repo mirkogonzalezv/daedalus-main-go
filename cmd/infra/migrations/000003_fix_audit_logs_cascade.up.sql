@@ -11,5 +11,5 @@ ALTER TABLE daedalus.audit_logs
 ADD CONSTRAINT audit_logs_user_id_fkey 
 FOREIGN KEY (user_id) REFERENCES daedalus.users(id) ON DELETE SET NULL;
 
--- Cambiar tenant_id para que pueda ser NULL (para preservar logs de tenants eliminados)
+-- Cambiar tenant_id para que pueda ser NULL
 ALTER TABLE daedalus.audit_logs ALTER COLUMN tenant_id DROP NOT NULL;
