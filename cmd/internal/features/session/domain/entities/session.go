@@ -8,7 +8,7 @@ type Session struct {
 	UserID     string
 	RefreshJWT string // hash/identifier del refresh token
 	ExpiresAt  time.Time
-	IssueAt    time.Time
+	IssueAt    *time.Time
 	IP         *string
 	UserAgent  *string
 	Revoked    bool

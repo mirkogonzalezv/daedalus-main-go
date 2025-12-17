@@ -59,7 +59,7 @@ func (a *App) Initialize() error {
 	}
 
 	// Dependencies & Routes
-	cont := container.NewContainer(db)
+	cont := container.NewContainer(db, cfg)
 	router := gin.New()
 
 	// Agregar middlewares manualmente para evitar warning

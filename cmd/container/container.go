@@ -2,6 +2,7 @@ package container
 
 import (
 	"daedalus-engine-go/cmd/common/logger"
+	"daedalus-engine-go/cmd/config"
 	auditRepository "daedalus-engine-go/cmd/internal/features/auditlog/application/data/local"
 	tenantRepository "daedalus-engine-go/cmd/internal/features/tenants/application/data/local"
 	tenantUsecases "daedalus-engine-go/cmd/internal/features/tenants/application/use_cases"
@@ -9,35 +10,51 @@ import (
 	userRepository "daedalus-engine-go/cmd/internal/features/users/application/data/local"
 	userUseCases "daedalus-engine-go/cmd/internal/features/users/application/use_cases"
 	userController "daedalus-engine-go/cmd/internal/features/users/infraestructure/handlers"
+	"time"
+
+	authRepository "daedalus-engine-go/cmd/internal/features/auth/application/data/local"
+	authUseCases "daedalus-engine-go/cmd/internal/features/auth/application/uses_cases"
+	authController "daedalus-engine-go/cmd/internal/features/auth/infraestructure/handlers"
+	authService "daedalus-engine-go/cmd/internal/features/auth/infraestructure/services"
 	"daedalus-engine-go/cmd/internal/pkg/services"
 	"database/sql"
 )
 
 type Container struct {
+	AuthController   *authController.AuthController
 	TenantController *tenantController.TenantController
 	UserController   *userController.UserController
+	AuthService      *authService.AuthService
 }
 
-func NewContainer(db *sql.DB) *Container {
+func NewContainer(db *sql.DB, cfg *config.Config) *Container {
 	log := logger.L()
 
-	//audit service
+	// Audit
 	auditLogRepo := auditRepository.NewAuditlogRepository(db)
-	//audit service
 	auditSvc := services.NewAuditService(auditLogRepo, log)
-	// Repositories
+
+	// Tenant
 	tenantRepo := tenantRepository.NewTenantRepository(db)
-	// Use Cases
 	tenantUseCase := tenantUsecases.NewTenantUseCase(tenantRepo, log, auditSvc)
-	// Controllers
 	tenantController := tenantController.NewTenantController(tenantUseCase, log)
 
+	// User
 	userRepo := userRepository.NewUserRepository(db)
 	userUseCase := userUseCases.NewUserUseCase(userRepo, log)
 	userController := userController.NewUserController(userUseCase, log)
 
+	// Auth
+	authRepo := authRepository.NewAuthRepository(db)
+	// TODO: Inyectar secret JWT por variables de entorno
+	authService := authService.NewAuthService(cfg.JwtSecret, time.Duration(cfg.JwtExpiredMin), time.Duration(cfg.JwtRefreshExpireDays), log)
+	authUseCase := authUseCases.NewAuthUseCase(authRepo, userRepo, authService, log)
+	authController := authController.NewAuthController(authUseCase, log)
+
 	return &Container{
 		TenantController: tenantController,
 		UserController:   userController,
+		AuthController:   authController,
+		AuthService:      authService,
 	}
 }

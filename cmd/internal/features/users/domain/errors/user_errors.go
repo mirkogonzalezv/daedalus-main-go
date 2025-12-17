@@ -19,6 +19,7 @@ const (
 	UserEmailDuplicatedError = "USER_012"
 	UserErrorDelete          = "USER_013"
 	UserErrorListNotFound    = "USER_014"
+	UserErrorInactive        = "USER_015"
 )
 
 func ErrUserNameRequired() *domainErrors.DomainError {
@@ -71,4 +72,8 @@ func ErrUserDeleteError() *domainErrors.DomainError {
 
 func ErrListUserNotFound() *domainErrors.DomainError {
 	return domainErrors.NewValidationError(UserErrorListNotFound, "No hay usuarios registrados")
+}
+
+func ErrUserInactive() *domainErrors.DomainError {
+	return domainErrors.NewValidationError(UserErrorInactive, "Usuario inactivo")
 }
