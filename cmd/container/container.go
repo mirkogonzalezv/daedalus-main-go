@@ -47,7 +47,9 @@ func NewContainer(db *sql.DB, cfg *config.Config) *Container {
 	// Auth
 	authRepo := authRepository.NewAuthRepository(db)
 	// TODO: Inyectar secret JWT por variables de entorno
-	authService := authService.NewAuthService(cfg.JwtSecret, time.Duration(cfg.JwtExpiredMin), time.Duration(cfg.JwtRefreshExpireDays), log)
+	authService := authService.NewAuthService(cfg.JwtSecret, +time.Duration(cfg.JwtExpiredMin)*time.Minute,
+		time.Duration(cfg.JwtRefreshExpireDays)*time.Hour*24,
+		log)
 	authUseCase := authUseCases.NewAuthUseCase(authRepo, userRepo, authService, log)
 	authController := authController.NewAuthController(authUseCase, log)
 
