@@ -42,11 +42,11 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, name, tenant_id, email, p
 		return nil, usersErrors.ErrUserRoleNotFound()
 	}
 
-	if role != "owner" && role != "admin" && role != "user" && role != "root" {
+	if role != "owner" && role != "admin" && role != "user" && role != "root" && role != "system_admin" {
 		return nil, usersErrors.ErrUserNotMatchRole()
 	}
 
-	if role != "root" && tenant_id == "" {
+	if role != "root" && role != "system_admin" && tenant_id == "" {
 		return nil, tenantsErrors.ErrTenantIdIsRequired()
 	}
 

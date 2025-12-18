@@ -52,8 +52,8 @@ func RequiredGlobalAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role := c.GetString("role")
 
-		if role != "root" && role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Admin role required"})
+		if role != "root" && role != "system_admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "System admin role required"})
 			c.Abort()
 			return
 		}

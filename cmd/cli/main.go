@@ -18,6 +18,7 @@ import (
 	userDomain "daedalus-engine-go/cmd/internal/features/users/domain/entities"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
@@ -80,7 +81,7 @@ func main() {
 
 func isSecureEnvironment() bool {
 	// Confirmamos si esta corriendo en produccion con la seguridad apropiada
-	env := os.Getenv("APP_ENV")
+	env := loadEnvironment()
 
 	if env == "production" {
 		// Verificamos secure connection a la DB
@@ -187,7 +188,7 @@ func setupRootUser() {
 	fmt.Printf("Session: %s\n", sessionToken[:8]+"...") // Mostramos los primeros 8 caracteres
 
 	// Cargamos variable de ambiente
-	config.LoadEnv("development")
+	loadEnvironment()
 	logger.Init("cli")
 	cfg, err := config.CargarVariables()
 	if err != nil {
@@ -336,7 +337,7 @@ func createAdminUser() {
 	fmt.Printf("Session: %s\n", sessionToken[:8]+"...")
 
 	// Load config
-	config.LoadEnv("development")
+	loadEnvironment()
 	logger.Init("cli")
 	cfg, err := config.CargarVariables()
 	if err != nil {
@@ -429,7 +430,7 @@ func createAdminUser() {
 		Name:         adminName,
 		Email:        adminEmail,
 		PasswordHash: string(hash),
-		Role:         "admin",
+		Role:         "system_admin",
 		Status:       "active",
 	}
 
@@ -446,21 +447,21 @@ func createAdminUser() {
 }
 
 func performSecurityCheck() {
-	fmt.Println("=== Security Validation Check ===")
+	fmt.Println(ColorBold + ColorWhite + "=== Security Validation Check ===" + ColorReset)
 
 	sessionToken := generateSessionToken()
-	fmt.Printf("Session: %s\n", sessionToken[:8]+"...")
+	fmt.Printf(ColorWhite+"Session: %s\n", sessionToken[:8]+"..."+ColorReset)
 
 	var issues []string
 	var warnings []string
 
-	fmt.Println("Checking Environment Security ...")
+	fmt.Println(ColorGreen + "Checking Environment Security ..." + ColorReset)
 
-	env := os.Getenv("APP_ENV")
+	env := loadEnvironment()
 
 	switch env {
 	case "":
-		issues = append(issues, "APP_ENV not set")
+		issues = append(issues, ColorBold+ColorRed+"APP_ENV not set"+ColorReset)
 	case "production":
 		fmt.Println(" Production environtment detected ")
 		if os.Getenv("DB_SSLMODE") != "require" {
@@ -474,18 +475,18 @@ func performSecurityCheck() {
 	}
 
 	// JWT Security Check
-	fmt.Println("\n Checking JWT Configuration...")
+	fmt.Println(ColorWhite + "\n Checking JWT Configuration..." + ColorReset)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		issues = append(issues, "JWT_SECRET not configured")
+		issues = append(issues, ColorBold+ColorRed+"JWT_SECRET not configured"+ColorReset)
 	} else {
 		if len(jwtSecret) < 16 {
-			issues = append(issues, "JWT_SECRET too short (minimum 16 chars)")
+			issues = append(issues, ColorYellow+"JWT_SECRET too short (minimum 16 chars)"+ColorReset)
 		} else if len(jwtSecret) < 32 {
-			warnings = append(warnings, "JWT_SECRET should be at least 32 chars for production")
+			warnings = append(warnings, ColorYellow+"JWT_SECRET should be at least 32 chars for production"+ColorReset)
 		} else {
-			fmt.Println(" JWT_SECRET length adequate")
+			fmt.Println(ColorBold + ColorGreen + " JWT_SECRET length adequate" + ColorReset)
 		}
 
 		if strings.Contains(strings.ToLower(jwtSecret), "secret") ||
@@ -495,105 +496,104 @@ func performSecurityCheck() {
 		}
 	}
 
-	fmt.Println(" Checking Database Security ...")
+	fmt.Println(ColorWhite + " Checking Database Security ..." + ColorReset)
 
-	config.LoadEnv(env)
 	cfg, err := config.CargarVariables()
 	if err != nil {
-		issues = append(issues, fmt.Sprintf("Config loading failed: %v", err))
+		issues = append(issues, fmt.Sprintf(ColorBold+ColorRed+"Config loading failed: %v"+ColorReset, err))
 	} else {
 		// Test database conection
 		db, err := database.NuevaBaseDeDatos(cfg)
 		if err != nil {
-			issues = append(issues, fmt.Sprintf("Database connection failed: %v", err))
+			issues = append(issues, fmt.Sprintf(ColorBold+ColorRed+"Database connection failed: %v"+ColorReset, err))
 		} else {
 			defer db.Close()
-			fmt.Println(" Database connection successful")
+			fmt.Println(ColorBold + ColorGreen + " Conexión a la DB exitosa" + ColorReset)
 
 			var rootCount int
 			err = db.QueryRow("SELECT COUNT(*) FROM daedalus.users WHERE role = 'root'").Scan(&rootCount)
 			if err != nil {
-				warnings = append(warnings, "Could not check root user account")
+				warnings = append(warnings, ColorYellow+"Could not check root user account"+ColorReset)
 			} else {
 				if rootCount == 0 {
-					warnings = append(warnings, "No root user found - run 'setup-root' first")
+					warnings = append(warnings, ColorYellow+"No root user found - run 'setup-root' first"+ColorReset)
 				} else if rootCount > 1 {
-					issues = append(issues, fmt.Sprintf("Multiple root users found (%d) - security risk", rootCount))
+					issues = append(issues, fmt.Sprintf(ColorBold+ColorRed+"Multiple root users found (%d) - security risk"+ColorReset, rootCount))
 				} else {
-					fmt.Println("Single root user configured")
+					fmt.Println(ColorCyan + "Single root user configured" + ColorReset)
 				}
 			}
 
 			var adminCount int
-			err = db.QueryRow("SELECT COUNT(*) FROM daedalus.users WHERE role = 'admin'").Scan(&adminCount)
+			err = db.QueryRow("SELECT COUNT(*) FROM daedalus.users WHERE role = 'system_admin'").Scan(&adminCount)
 			if err != nil {
-				warnings = append(warnings, "Could not check admin user count")
+				warnings = append(warnings, ColorYellow+"Could not check admin user count"+ColorReset)
 			} else {
 				if adminCount == 0 {
-					warnings = append(warnings, "No admin user found - run 'create-admin'")
+					warnings = append(warnings, ColorYellow+"No System admin user found - run 'create-admin'"+ColorReset)
 				} else {
-					fmt.Printf(" %d admin user(s) configured\n", adminCount)
+					fmt.Printf(ColorGreen+" %d System admin user(s) configured\n"+ColorReset, adminCount)
 				}
 			}
 		}
 	}
 
-	fmt.Println(" Checking File Permissions ...")
+	fmt.Println(ColorWhite + " Checking File Permissions ..." + ColorReset)
 
 	if checkFilePermissions() {
-		fmt.Println("File permissions secure")
+		fmt.Println(ColorBold + ColorGreen + " Permisos de archivos seguros" + ColorReset)
 	} else {
-		warnings = append(warnings, "Some file may have insecure permissions")
+		warnings = append(warnings, ColorYellow+"Some file may have insecure permissions"+ColorReset)
 	}
 
-	fmt.Println("\n Checking Network Configuration ...")
+	fmt.Println(ColorWhite + "\n Checking Network Configuration ..." + ColorReset)
 
 	port := os.Getenv("PORT")
 	switch port {
 	case "":
-		warnings = append(warnings, "PORT not explicitly set")
+		warnings = append(warnings, ColorYellow+"PORT not explicitly set"+ColorReset)
 	case "80", "8080":
 		if env == "production" {
-			warnings = append(warnings, "Consider using HTTPS (port 443) in production")
+			warnings = append(warnings, ColorBold+ColorYellow+"Consider using HTTPS (port 443) in production"+ColorReset)
 		}
 	}
 
 	// Check OWASP TOP 10
 
-	fmt.Println(" OWASP Top 10 Security Checks ...")
+	fmt.Println(ColorBlue + " OWASP Top 10 Security Checks ..." + ColorReset)
 
-	fmt.Println(" A01: Access Control - JWT middleware implemented")
+	fmt.Println(ColorPurple + " A01: Access Control - JWT middleware implemented" + ColorReset)
 
 	if len(jwtSecret) >= 32 {
-		fmt.Println(" A02: Cryptographic - Strong JWT secret")
+		fmt.Println(ColorGreen + " A02: Cryptographic - Strong JWT secret" + ColorReset)
 	} else {
-		warnings = append(warnings, "A02: Weak cryptographic configuration")
+		warnings = append(warnings, ColorYellow+"A02: Weak cryptographic configuration"+ColorReset)
 	}
 
 	// A03: Injection
-	fmt.Println(" A03: Injection - Parameterized queries used")
+	fmt.Println(ColorPurple + " A03: Injection - Parameterized queries used")
 
 	// A07: Identification and Authentication Failures
-	fmt.Println(" A07: Authentication - Bcrypt password hashing")
+	fmt.Println(" A07: Authentication - Bcrypt password hashing" + ColorReset)
 
 	// Generate Security Report
-	fmt.Println("\n" + strings.Repeat("=", 50))
-	fmt.Println(" SECURITY ASSESSMENT REPORT")
-	fmt.Println(strings.Repeat("=", 50))
+	fmt.Println(ColorCyan + "\n" + strings.Repeat("=", 50))
+	fmt.Println(ColorBlue + " SECURITY ASSESSMENT REPORT")
+	fmt.Println(ColorCyan + strings.Repeat("=", 50) + ColorReset)
 
 	if len(issues) == 0 && len(warnings) == 0 {
 		fmt.Println(" Excelente: No hay problemas encontrados!")
 		fmt.Println(" Sistema ha pasado todos los controles de seguridad")
 	} else {
 		if len(issues) > 0 {
-			fmt.Printf(" PROBLEMAS CRITICOS (%d):\n", len(issues))
+			fmt.Printf(ColorBold+ColorRed+" PROBLEMAS CRITICOS (%d):\n"+ColorReset, len(issues))
 			for i, issue := range issues {
 				fmt.Printf("   %d.  %s\n", i+1, issue)
 			}
 		}
 
 		if len(warnings) > 0 {
-			fmt.Printf(" ALERTAS (%d):\n", len(warnings))
+			fmt.Printf(ColorBold+ColorYellow+" ALERTAS (%d):\n"+ColorReset, len(warnings))
 			for i, warning := range warnings {
 				fmt.Printf("   %d.  %s\n", i+1, warning)
 			}
@@ -609,22 +609,22 @@ func performSecurityCheck() {
 		score = 0
 	}
 
-	fmt.Printf("\n Security Score: %d/%d", score, totalChecks)
+	fmt.Printf(ColorPurple+"\n Puntaje de seguridad: %d/%d |"+ColorReset, score, totalChecks)
 
 	if score >= 9 {
-		fmt.Println(" (EXCELENTE)")
+		fmt.Println(ColorGreen + " (EXCELENTE)" + ColorReset)
 	} else if score >= 7 {
-		fmt.Println(" (BIEN)")
+		fmt.Println(ColorCyan + " (BIEN)" + ColorReset)
 	} else if score >= 5 {
-		fmt.Println(" (JUSTO - Necesita mejoras)")
+		fmt.Println(ColorYellow + " (JUSTO - Necesita mejoras)" + ColorReset)
 	} else {
-		fmt.Println(" (POBRE - Requiere acciones inmediatas)")
+		fmt.Println(ColorRed + " (POBRE - Requiere acciones inmediatas)" + ColorReset)
 	}
 
-	fmt.Printf(" Session: %s\n", sessionToken[:8]+"...")
+	fmt.Printf(ColorWhite+" Session: %s\n", sessionToken[:8]+"..."+ColorReset)
 
 	if len(issues) > 0 {
-		fmt.Println("\nAborde los problemas críticos antes de la implementación de producción!")
+		fmt.Println(ColorRed + "\nAborde los problemas críticos antes de la implementación de producción!" + ColorReset)
 		os.Exit(1)
 	}
 }
@@ -634,7 +634,6 @@ func checkFilePermissions() bool {
 		".env.dev",
 		".env.qa",
 		".env.production",
-		"cmd/config/config.go",
 	}
 
 	allSecure := true
@@ -644,11 +643,27 @@ func checkFilePermissions() bool {
 			mode := info.Mode()
 
 			if mode&0044 != 0 {
-				fmt.Printf(" %s has overly permissive permissions: %v\n", file, mode)
+				fmt.Printf(ColorYellow+" %s tiene demasiados permisos: %v\n"+ColorRed, file, mode)
 				allSecure = false
 			}
 		}
 	}
 
 	return allSecure
+}
+
+func loadEnvironment() string {
+	env := os.Getenv("APP_ENV")
+
+	if env == "" {
+		godotenv.Load(".env.dev")
+		env = os.Getenv("APP_ENV")
+	}
+
+	if env == "" {
+		env = "development"
+	}
+
+	config.LoadEnv(env)
+	return env
 }
