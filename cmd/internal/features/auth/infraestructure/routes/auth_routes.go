@@ -14,8 +14,11 @@ func RegisterAuthRoutes(rg *gin.RouterGroup, ctrl *authControllers.AuthControlle
 	// Endpoints publicos (no requiere autenticación)
 	auth.POST("/login", ctrl.Login)
 	auth.POST("/refresh", ctrl.RefreshToken)
+	auth.POST("/logout", ctrl.Logout)
 
 	// Protected endpoints (requieren autenticación)
-	auth.POST("/logout", middlewares.AuthMiddleware(authService), ctrl.Logout)
-	auth.POST("/logout-all", middlewares.AuthMiddleware(authService), ctrl.LogoutAll)
+	auth.POST("/logout-all",
+		middlewares.AuthMiddleware(authService),
+		middlewares.RequiredGlobalAdmin(),
+		ctrl.LogoutAll)
 }

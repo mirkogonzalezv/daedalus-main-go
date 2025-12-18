@@ -102,10 +102,10 @@ func (uc *AuthUseCase) RefreshToken(ctx context.Context, req *authRequest.Refres
 	}
 
 	// Obtenemos el usuario
-	user, err := uc.userRepo.GetById(ctx, session.ID)
+	user, err := uc.userRepo.GetById(ctx, session.UserID)
 
 	if err != nil || user == nil {
-		uc.log.Error("Usuario no encontrado para la sesión", zap.String("user_id", user.ID))
+		uc.log.Error("Usuario no encontrado para la sesión", zap.String("session_user_id", session.UserID))
 		return nil, userErrors.ErrUserNotFound()
 	}
 

@@ -43,8 +43,8 @@ func (p *PostgresAuthRepository) CreateSession(ctx context.Context, session *dom
 // GetSessionByID implements repository.AuthRepository.
 func (p *PostgresAuthRepository) GetSessionByID(ctx context.Context, sessionID string) (*domainSession.Session, error) {
 	query := `
-		SELECT id, tenant_id, user_id, refresh_hash, issued_at, expires_at,
-		user_agent, revoked FROM daedalus.sessions WHERE id = &1
+		SELECT id, tenant_id, user_id, refresh_hash, issued_at, expires_at, ip,
+		user_agent, revoked FROM daedalus.sessions WHERE id = $1
 	`
 
 	row := p.db.QueryRowContext(ctx, query, sessionID)
@@ -57,6 +57,7 @@ func (p *PostgresAuthRepository) GetSessionByID(ctx context.Context, sessionID s
 		&session.RefreshJWT,
 		&session.IssuedAt,
 		&session.ExpiresAt,
+		&session.IP,
 		&session.UserAgent,
 		&session.Revoked,
 	)
@@ -71,8 +72,8 @@ func (p *PostgresAuthRepository) GetSessionByID(ctx context.Context, sessionID s
 // GetSessionByRefreshHash implements repository.AuthRepository.
 func (p *PostgresAuthRepository) GetSessionByRefreshHash(ctx context.Context, refreshHash string) (*domainSession.Session, error) {
 	query := `
-		SELECT id, tenant_id, user_id, refresh_hash, issued_at, expires_at,
-		user_agent, revoked FROM daedalus.sessions WHERE refresh_hash = &1 AND revoked = false
+		SELECT id, tenant_id, user_id, refresh_hash, issued_at, expires_at, ip, 
+		user_agent, revoked FROM daedalus.sessions WHERE refresh_hash = $1 AND revoked = false
 	`
 
 	row := p.db.QueryRowContext(ctx, query, refreshHash)
@@ -85,6 +86,7 @@ func (p *PostgresAuthRepository) GetSessionByRefreshHash(ctx context.Context, re
 		&session.RefreshJWT,
 		&session.IssuedAt,
 		&session.ExpiresAt,
+		&session.IP,
 		&session.UserAgent,
 		&session.Revoked,
 	)
