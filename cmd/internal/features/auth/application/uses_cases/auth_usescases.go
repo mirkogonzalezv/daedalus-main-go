@@ -67,6 +67,11 @@ func (uc *AuthUseCase) Login(ctx context.Context, req *authRequest.LoginRequest)
 
 	// Create session
 	session := uc.authService.CreateSession(user, refreshHash, req.IP, req.UserAgent)
+
+	if session == nil {
+		return nil, authErrors.ErrAuthInternalServerError()
+	}
+
 	if err := uc.authRepo.CreateSession(ctx, session); err != nil {
 		uc.log.Error("Failed al crear sesión", zap.Error(err))
 		return nil, authErrors.ErrAuthInternalServerError()

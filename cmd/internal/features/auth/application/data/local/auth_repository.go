@@ -17,9 +17,10 @@ func NewAuthRepository(db *sql.DB) authRepo.AuthRepository {
 
 // CreateSession implements repository.AuthRepository.
 func (p *PostgresAuthRepository) CreateSession(ctx context.Context, session *domainSession.Session) error {
+
 	query := `
 		INSERT INTO daedalus.sessions(
-			id, tenant_id, user_id, refresh_hash, issued_at, expires_at, user_agent, revoked
+			id, tenant_id, user_id, refresh_hash, issued_at, expires_at, ip, user_agent, revoked
 		)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 	`
@@ -30,8 +31,9 @@ func (p *PostgresAuthRepository) CreateSession(ctx context.Context, session *dom
 		session.TenantID,
 		session.UserID,
 		session.RefreshJWT,
-		session.IssueAt,
+		session.IssuedAt,
 		session.ExpiresAt,
+		session.IP,
 		session.UserAgent,
 		session.Revoked)
 
@@ -53,7 +55,7 @@ func (p *PostgresAuthRepository) GetSessionByID(ctx context.Context, sessionID s
 		&session.TenantID,
 		&session.UserID,
 		&session.RefreshJWT,
-		&session.IssueAt,
+		&session.IssuedAt,
 		&session.ExpiresAt,
 		&session.UserAgent,
 		&session.Revoked,
@@ -81,7 +83,7 @@ func (p *PostgresAuthRepository) GetSessionByRefreshHash(ctx context.Context, re
 		&session.TenantID,
 		&session.UserID,
 		&session.RefreshJWT,
-		&session.IssueAt,
+		&session.IssuedAt,
 		&session.ExpiresAt,
 		&session.UserAgent,
 		&session.Revoked,

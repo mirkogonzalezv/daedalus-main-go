@@ -49,21 +49,35 @@ func (s *AuthService) GenerateTokenPair(user *userDomain.User) (*authDomain.Toke
 }
 
 func (s *AuthService) CreateSession(user *userDomain.User, refreshHash, ip, userAgent string) *sessionDomain.Session {
-	now := time.Now()
 
-	expiresAt := now.Add(s.refreshTTL)
+	// Zero Trust: Validamos que solo los usuarios globales pueden tener sesiones sin tenant
+	if user.TenantID == nil && user.Role != "root" && user.Role != "system_admin" {
+		s.log.Error("Intento no autorizado de crear una sesión global",
+			zap.String("user_id", user.ID),
+			zap.String("role", user.Role),
+			zap.String("email", user.Email),
+		)
 
-	var tenantID *string
-	if user.TenantID != nil {
-		tenantID = user.TenantID
+		return nil
 	}
+
+	// audit log para sesiones globales
+	if user.TenantID == nil {
+		s.log.Info("Global session created",
+			zap.String("user_id", user.ID),
+			zap.String("role", user.Role),
+			zap.String("ip", ip))
+	}
+
+	now := time.Now()
+	expiresAt := now.Add(s.refreshTTL)
 
 	return &sessionDomain.Session{
 		ID:         uuid.NewString(),
-		TenantID:   *tenantID,
+		TenantID:   user.TenantID,
 		UserID:     user.ID,
 		RefreshJWT: refreshHash,
-		IssueAt:    &now,
+		IssuedAt:   &now,
 		ExpiresAt:  expiresAt,
 		IP:         &ip,
 		UserAgent:  &userAgent,
@@ -96,7 +110,13 @@ func (s *AuthService) ValidateAccessToken(tokenString string) (*authDomain.Claim
 
 	// Obtenemos los claims seguros
 	userID, _ := claims["user_id"].(string)
-	tenantID, _ := claims["tenant_id"].(string)
+
+	// Manejo seguro de tenant-id nullable
+	var tenantID string
+	if tid, ok := claims["tenant_id"]; ok && tid != nil {
+		tenantID, _ = tid.(string)
+	}
+
 	role, _ := claims["role"].(string)
 	email, _ := claims["email"].(string)
 	iat, _ := claims["iat"].(float64)
@@ -125,15 +145,23 @@ func (s *AuthService) generateSecureHash() (string, error) {
 func (s *AuthService) generateAccessToken(user *userDomain.User) (string, error) {
 	now := time.Now()
 
+	// Manejo seguro del tenant_id null para JWT
+	var tenantIDClaim interface{}
+	if user.TenantID != nil {
+		tenantIDClaim = *user.TenantID
+	} else {
+		tenantIDClaim = nil
+	}
+
 	claims := jwt.MapClaims{
 		"user_id":   user.ID,
-		"tenant_id": user.TenantID,
+		"tenant_id": tenantIDClaim,
 		"role":      user.Role,
 		"email":     user.Email,
 		"iat":       now.Unix(),
 		"exp":       now.Add(s.accessTTL).Unix(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.jwtSecret))
 }
