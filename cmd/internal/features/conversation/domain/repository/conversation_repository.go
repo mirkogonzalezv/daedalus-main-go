@@ -8,5 +8,8 @@ import (
 type ConversationRepository interface {
 	Create(ctx context.Context, c *domain.Conversation) error
 	GetById(ctx context.Context, id string) (*domain.Conversation, error)
+	GetByUserId(ctx context.Context, userId, tenantId string, page, pageSize int) ([]*domain.Conversation, int, error)
+	Update(ctx context.Context, c *domain.Conversation) error
+	Delete(ctx context.Context, id string) error
 	ListAllConversations(ctx context.Context) ([]*domain.Conversation, error)
 }

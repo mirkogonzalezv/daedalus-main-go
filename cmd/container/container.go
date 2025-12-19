@@ -16,6 +16,10 @@ import (
 	authUseCases "daedalus-engine-go/cmd/internal/features/auth/application/uses_cases"
 	authController "daedalus-engine-go/cmd/internal/features/auth/infraestructure/handlers"
 	authService "daedalus-engine-go/cmd/internal/features/auth/infraestructure/services"
+
+	conversationRepository "daedalus-engine-go/cmd/internal/features/conversation/application/data/local"
+	conversationUseCases "daedalus-engine-go/cmd/internal/features/conversation/application/uses_cases"
+	conversationController "daedalus-engine-go/cmd/internal/features/conversation/infraestructure/handlers"
 	"daedalus-engine-go/cmd/internal/pkg/services"
 	"database/sql"
 
@@ -24,11 +28,12 @@ import (
 )
 
 type Container struct {
-	AuthController   *authController.AuthController
-	TenantController *tenantController.TenantController
-	UserController   *userController.UserController
-	AuthService      *authService.AuthService
-	RateLimitService *rateLimitService.RateLimitService
+	AuthController         *authController.AuthController
+	TenantController       *tenantController.TenantController
+	UserController         *userController.UserController
+	AuthService            *authService.AuthService
+	RateLimitService       *rateLimitService.RateLimitService
+	ConversationController *conversationController.ConversationController
 }
 
 func NewContainer(db *sql.DB, cfg *config.Config) *Container {
@@ -61,11 +66,16 @@ func NewContainer(db *sql.DB, cfg *config.Config) *Container {
 	rateLimitRepo := rateLimitRepository.NewMemoryRateLimitRepository()
 	rateLimitSvc := rateLimitService.NewRateLimitService(rateLimitRepo, log)
 
+	// Conversation
+	convRepo := conversationRepository.NewConversationRepository(db)
+	convUseCases := conversationUseCases.NewConversationUseCase(convRepo, log)
+	convController := conversationController.NewConversationController(convUseCases, log)
 	return &Container{
-		TenantController: tenantController,
-		UserController:   userController,
-		AuthController:   authController,
-		AuthService:      authService,
-		RateLimitService: rateLimitSvc,
+		TenantController:       tenantController,
+		UserController:         userController,
+		AuthController:         authController,
+		AuthService:            authService,
+		RateLimitService:       rateLimitSvc,
+		ConversationController: convController,
 	}
 }
