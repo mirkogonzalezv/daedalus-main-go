@@ -7,6 +7,8 @@
 *.test
 *.out
 
+.amazonq/
+
 # Vendor directory (descomenta si no quieres subir dependencias)
 # vendor/
 

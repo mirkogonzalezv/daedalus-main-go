@@ -18,6 +18,9 @@ import (
 	authService "daedalus-engine-go/cmd/internal/features/auth/infraestructure/services"
 	"daedalus-engine-go/cmd/internal/pkg/services"
 	"database/sql"
+
+	rateLimitRepository "daedalus-engine-go/cmd/internal/features/ratelimit/application/data/local"
+	rateLimitService "daedalus-engine-go/cmd/internal/features/ratelimit/infraestructure/services"
 )
 
 type Container struct {
@@ -25,6 +28,7 @@ type Container struct {
 	TenantController *tenantController.TenantController
 	UserController   *userController.UserController
 	AuthService      *authService.AuthService
+	RateLimitService *rateLimitService.RateLimitService
 }
 
 func NewContainer(db *sql.DB, cfg *config.Config) *Container {
@@ -53,10 +57,15 @@ func NewContainer(db *sql.DB, cfg *config.Config) *Container {
 	authUseCase := authUseCases.NewAuthUseCase(authRepo, userRepo, authService, log)
 	authController := authController.NewAuthController(authUseCase, log)
 
+	// Ratelimit
+	rateLimitRepo := rateLimitRepository.NewMemoryRateLimitRepository()
+	rateLimitSvc := rateLimitService.NewRateLimitService(rateLimitRepo, log)
+
 	return &Container{
 		TenantController: tenantController,
 		UserController:   userController,
 		AuthController:   authController,
 		AuthService:      authService,
+		RateLimitService: rateLimitSvc,
 	}
 }
